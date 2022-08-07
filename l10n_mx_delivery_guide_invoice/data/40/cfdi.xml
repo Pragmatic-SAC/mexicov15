@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="cfdiv40_guide_invoice" inherit_id="l10n_mx_edi_40.cfdiv40">
+        <xpath expr="//*[name()='cfdi:Comprobante']" position="attributes" t-if="record.l10n_mx_edi_is_guide_invoice">
+            <attribute name="t-att-xmlns__cartaporte20">"http://www.sat.gob.mx/CartaPorte20" if record.l10n_mx_edi_is_guide_invoice else False</attribute>
+        </xpath>
+        <!--        <xpath expr="//*[name()='cfdi:Concepto']" position="attributes">-->
+        <!--            <attribute name="NoIdentificacion">"01"</attribute>-->
+        <!--            <attribute name="ObjetoImp">"01"</attribute>-->
+        <!--        </xpath>-->
+        <xpath expr="//*[name()='cfdi:Comprobante']" position="inside">
+            <t t-if="record.l10n_mx_edi_is_guide_invoice"
+               xmlns:cfdi="http://www.sat.gob.mx/cfd/4"
+               xmlns:cartaporte20="http://www.sat.gob.mx/CartaPorte20">
+                <cfdi:Complemento t-if="record.l10n_mx_edi_is_guide_invoice">
+                    <cartaporte20:CartaPorte t-att-TranspInternac="'Sí' if record.l10n_mx_edi_is_export else 'No'"
+                                             t-att-TotalDistRec="record.l10n_mx_edi_distance"
+                                             t-att-EntradaSalidaMerc="'Salida' if record.l10n_mx_edi_is_export else None"
+                                             t-att-ViaEntradaSalida="record.l10n_mx_edi_transport_type if record.l10n_mx_edi_is_export else None"
+                                             t-att-PaisOrigenDestino="record.partner_id.country_id.l10n_mx_edi_code if record.l10n_mx_edi_is_export else None"
+                                             Version="2.0">
+                        <cartaporte20:Ubicaciones>
+                            <t t-set="warehouse_partner" t-value="record.l10n_mx_edi_origin_id"/>
+                            <cartaporte20:Ubicacion
+                                    TipoUbicacion="Origen"
+                                    t-att-IDUbicacion="'OR1' + str(record.company_id.partner_id.id).rjust(5,'0')"
+                                    t-att-FechaHoraSalidaLlegada="cfdi_date"
+                                    t-att-RFCRemitenteDestinatario="supplier.vat">
+                                <cartaporte20:Domicilio
+                                        t-att-Calle="warehouse_partner.street"
+                                        t-att-NumeroExterior="format_string(warehouse_partner.street_number or '') or None"
+                                        t-att-NumeroInterior="format_string(warehouse_partner.street_number2 or '') or None"
+                                        t-att-Colonia="warehouse_partner.l10n_mx_edi_colony_code"
+                                        t-att-Localidad="warehouse_partner.l10n_mx_edi_locality_id.code"
+                                        t-att-Estado="warehouse_partner.state_id.code"
+                                        t-att-Pais="warehouse_partner.country_id.l10n_mx_edi_code"
+                                        t-att-CodigoPostal="warehouse_partner.zip"/>
+                            </cartaporte20:Ubicacion>
+                            <cartaporte20:Ubicacion
+                                    TipoUbicacion="Destino"
+                                    t-att-IDUbicacion="'DE1' + str(record.l10n_mx_edi_shipping_id.id).rjust(5,'0')"
+                                    t-att-DistanciaRecorrida="record.l10n_mx_edi_distance"
+                                    t-att-FechaHoraSalidaLlegada="scheduled_date"
+                                    t-att-RFCRemitenteDestinatario="customer.vat if not record.l10n_mx_edi_is_export else 'XEXX010101000'"
+                                    t-att-NumRegIdTrib="customer.vat if record.l10n_mx_edi_is_export else None"
+                                    t-att-ResidenciaFiscal="record.l10n_mx_edi_shipping_id.country_id.l10n_mx_edi_code if record.l10n_mx_edi_is_export else None">
+                                <cartaporte20:Domicilio
+                                        t-att-Calle="record.l10n_mx_edi_shipping_id.street"
+                                        t-att-NumeroExterior="format_string(record.l10n_mx_edi_shipping_id.street_number or '') or None"
+                                        t-att-NumeroInterior="format_string(record.l10n_mx_edi_shipping_id.street_number2 or '') or None"
+                                        t-att-Colonia="record.l10n_mx_edi_shipping_id.l10n_mx_edi_colony_code"
+                                        t-att-Localidad="record.l10n_mx_edi_shipping_id.l10n_mx_edi_locality_id.code"
+                                        t-att-Municipio="record.l10n_mx_edi_shipping_id.city_id.l10n_mx_edi_code"
+                                        t-att-Estado="record.l10n_mx_edi_shipping_id.state_id.code"
+                                        t-att-Pais="record.l10n_mx_edi_shipping_id.country_id.l10n_mx_edi_code"
+                                        t-att-CodigoPostal="record.l10n_mx_edi_shipping_id.zip"/>
+                            </cartaporte20:Ubicacion>
+                        </cartaporte20:Ubicaciones>
+                        <cartaporte20:Mercancias
+                                t-att-NumTotalMercancias="len(record.invoice_line_ids)"
+                                t-att-PesoBrutoTotal="format_float(sum(record.invoice_line_ids.mapped('product_id.weight')), 3)"
+                                t-att-UnidadPeso="record.l10n_mx_get_weight_uom().unspsc_code_id.code">
+                            <t t-foreach="record.invoice_line_ids" t-as="pline" t-key="pline_index">
+                                <cartaporte20:Mercancia
+                                        BienesTransp="15101506"
+                                        t-att-Cantidad="format_float(pline.quantity, 6)"
+                                        ClaveUnidad="LTR"
+                                        t-att-FraccionArancelaria="pline.product_id.l10n_mx_edi_tariff_fraction_id.code if record.l10n_mx_edi_is_export else None"
+                                        t-att-MaterialPeligroso="'Sí' if pline.product_id.l10n_mx_edi_hazardous_material_code else None"
+                                        t-att-CveMaterialPeligroso="pline.product_id.l10n_mx_edi_hazardous_material_code if pline.product_id.l10n_mx_edi_hazardous_material_code else None"
+                                        t-att-Embalaje="pline.product_id.l10n_mx_edi_hazard_package_type if pline.product_id.l10n_mx_edi_hazardous_material_code else None"
+                                        DescripEmbalaje="TANQUE"
+                                        Descripcion="REGULAR"
+                                        t-att-PesoEnKg="format_float(pline.product_id.weight, 3)">
+                                    <cartaporte20:CantidadTransporta
+                                            t-att-Cantidad="format_float(pline.quantity, 6)"
+                                            t-att-IDOrigen="'OR1' + str(record.company_id.partner_id.id).rjust(5,'0')"
+                                            t-att-IDDestino="'DE1' + str(record.l10n_mx_edi_shipping_id.id).rjust(5,'0')"/>
+                                </cartaporte20:Mercancia>
+                            </t>
+                            <cartaporte20:Autotransporte t-if="record.l10n_mx_edi_transport_type == '01'"
+                                                         t-att-NumPermisoSCT="record.l10n_mx_edi_vehicle_id.name"
+                                                         t-att-PermSCT="record.l10n_mx_edi_vehicle_id.transport_perm_sct">
+                                <cartaporte20:IdentificacionVehicular
+                                        t-att-AnioModeloVM="record.l10n_mx_edi_vehicle_id.vehicle_model"
+                                        t-att-ConfigVehicular="record.l10n_mx_edi_vehicle_id.vehicle_config"
+                                        t-att-PlacaVM="record.l10n_mx_edi_vehicle_id.vehicle_licence"/>
+                                <cartaporte20:Seguros
+                                        t-att-AseguraMedAmbiente="record.l10n_mx_edi_vehicle_id.environment_insurer if any(record.invoice_line_ids.product_id.mapped('l10n_mx_edi_hazardous_material_code')) else None"
+                                        t-att-PolizaMedAmbiente="record.l10n_mx_edi_vehicle_id.environment_insurance_policy if any(record.invoice_line_ids.product_id.mapped('l10n_mx_edi_hazardous_material_code')) else None"
+                                        t-att-AseguraRespCivil="record.l10n_mx_edi_vehicle_id.transport_insurer"
+                                        t-att-PolizaRespCivil="record.l10n_mx_edi_vehicle_id.transport_insurance_policy"/>
+                                <cartaporte20:Remolques t-if="record.l10n_mx_edi_vehicle_id.trailer_ids">
+                                    <t t-foreach="record.l10n_mx_edi_vehicle_id.trailer_ids" t-as="trailer">
+                                        <cartaporte20:Remolque
+                                                t-att-SubTipoRem="trailer.sub_type"
+                                                t-att-Placa="trailer.name"/>
+                                    </t>
+                                </cartaporte20:Remolques>
+                            </cartaporte20:Autotransporte>
+                        </cartaporte20:Mercancias>
+                        <cartaporte20:FiguraTransporte>
+                            <t t-foreach="record.l10n_mx_edi_vehicle_id.figure_ids.sorted(lambda f: f.type)"
+                               t-as="figure">
+                                <cartaporte20:TiposFigura
+                                        t-att-TipoFigura="figure.type"
+                                        t-att-RFCFigura="figure.operator_id.vat"
+                                        t-att-NumLicencia="figure.type == '01' and figure.operator_id.l10n_mx_edi_operator_licence">
+                                    <t t-foreach="figure.part_ids" t-as="part">
+                                        <cartaporte20:PartesTransporte t-if="figure.type in ('02', '03')"
+                                                                       t-att-ParteTransporte="part.code"/>
+                                    </t>
+                                </cartaporte20:TiposFigura>
+                            </t>
+                        </cartaporte20:FiguraTransporte>
+                    </cartaporte20:CartaPorte>
+                </cfdi:Complemento>
+            </t>
+        </xpath>
+    </template>
+</odoo>
