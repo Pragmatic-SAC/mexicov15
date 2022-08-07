@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="l10n_mx_delivery_guide_invoice_trailer_tree" model="ir.ui.view">
+        <field name="name">l10n_mx_delivery_guide_invoice.trailer.tree</field>
+        <field name="model">l10n_mx_delivery_guide_invoice.trailer</field>
+        <field name="arch" type="xml">
+            <tree string="MX EDI Vehicle Trailer">
+                <field name="name"/>
+                <field name="vehicle_id"/>
+                <field name="sub_type"/>
+                <field name="active" widget="boolean_toggle" readonly="1"/>
+            </tree>
+        </field>
+    </record>
+    <record id="l10n_mx_delivery_guide_invoice_trailer_form" model="ir.ui.view">
+        <field name="name">l10n_mx_delivery_guide_invoice.trailer.form</field>
+        <field name="model">l10n_mx_delivery_guide_invoice.trailer</field>
+        <field name="arch" type="xml">
+            <form string="MX EDI Vehicle Trailer">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="vehicle_id"
+                                   options="{'no_create': True, 'no_create_edit':True,'no_open': True}"/>
+                        </group>
+                        <group>
+                            <field name="sub_type"/>
+                            <field name="active" widget="boolean_toggle"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+    <record id="l10n_mx_delivery_guide_invoice_trailer_search" model="ir.ui.view">
+        <field name="name">l10n_mx_delivery_guide_invoice.trailer.search</field>
+        <field name="model">l10n_mx_delivery_guide_invoice.trailer</field>
+        <field name="type">search</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <filter name="active" string="Active" domain="[('active','=',True)]"
+                        help="Show active"/>
+                <filter name="inactive" string="Archived" domain="[('active','=',False)]"
+                        help="Show archived"/>
+            </search>
+        </field>
+    </record>
+    <record id="l10n_mx_delivery_guide_invoice_trailer_action" model="ir.actions.act_window">
+        <field name="name">MX EDI Vehicle Trailer</field>
+        <field name="res_model">l10n_mx_delivery_guide_invoice.trailer</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="l10n_mx_delivery_guide_invoice_trailer_search"/>
+        <field name="domain"></field>
+    </record>
+    <menuitem action="l10n_mx_delivery_guide_invoice_trailer_action" id="menu_stock_mx_trailer" name="Trailers"
+              parent="menu_stock_config_settings_mx"/>
+</odoo>
